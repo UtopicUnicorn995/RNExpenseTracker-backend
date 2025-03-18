@@ -98,4 +98,43 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser };
+const deleteUser = async (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  try {
+    db.query("SELECT * FROM users WHERE id = ?", [id], async (err, result) => {
+      if (err) {
+        console.error("Error fetching user", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (result.length === 0) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      db.query(
+        "UPDATE users SET is_active = ? WHERE id = ?",
+        [0, id],
+        (updateErr, updateResult) => {
+          if (updateErr) {
+            console.error("Error updating user: ", updateErr);
+            return res.status(500).json({ error: "Failed to deactivate user" });
+          }
+
+          return res
+            .status(200)
+            .json({ message: "User deactivated successfully", updateResult });
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Unexpected error: ", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+module.exports = { createUser, loginUser, deleteUser };
