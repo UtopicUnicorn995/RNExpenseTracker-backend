@@ -14,6 +14,21 @@ const createUser = async (req, res) => {
       (err, result) => {
         if (err) {
           console.error(err);
+
+          if (err.code === "ER_DUP_ENTRY") {
+            let duplicateField = "";
+
+            if (err.message.includes("username")) {
+              duplicateField = "Username";
+            } else if (err.message.includes("email")) {
+              duplicateField = "Email";
+            }
+
+            return res.status(409).json({
+              error: `${duplicateField || "Entry"} already exists`,
+            });
+          }
+
           return res.status(500).json({ error: "Database insertion failed" });
         }
         res.status(201).json({
