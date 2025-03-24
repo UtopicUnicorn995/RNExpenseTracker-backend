@@ -221,7 +221,7 @@ const addBalance = async (req, res) => {
 
           db.query(
             "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, amount, "credit", description || ""],
+            [id, amount, "deposit", description || ""],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
@@ -281,6 +281,26 @@ const subtractBalance = async (req, res) => {
             return res.status(500).json({ error: "Failed to update balance" });
           }
 
+          db.query(
+            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
+            [id, amount, "withdrawal", description || ""],
+            (insertErr, insertResult) => {
+              if (insertErr) {
+                console.error("Error creating transaction:", insertErr);
+                return res
+                  .status(500)
+                  .json({ error: "Failed to create transaction" });
+              }
+
+              return res.status(200).json({
+                message:
+                  "Balance updated and transaction recorded successfully",
+                balance: newBalance,
+                transaction: insertResult,
+              });
+            }
+          );
+
           return res
             .status(200)
             .json({ message: "Balance updated successfully", updateResult });
@@ -294,9 +314,9 @@ const subtractBalance = async (req, res) => {
 };
 
 const updateBalance = async (req, res) => {
-  const { id, amount } = req.body;
+  const { id, newBalance } = req.body;
 
-  if (!id || !amount) {
+  if (!id || !newBalance) {
     return res.status(400).json({ error: "User ID and amount are required" });
   }
 
@@ -315,12 +335,32 @@ const updateBalance = async (req, res) => {
 
       db.query(
         "UPDATE users SET available_balance = ? WHERE id = ?",
-        [amount, id],
+        [newBalance, id],
         (updateErr, updateResult) => {
           if (updateErr) {
             console.error("Error updating user: ", updateErr);
             return res.status(500).json({ error: "Failed to update balance" });
           }
+
+          db.query(
+            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
+            [id, amount, "modify", description || ""],
+            (insertErr, insertResult) => {
+              if (insertErr) {
+                console.error("Error creating transaction:", insertErr);
+                return res
+                  .status(500)
+                  .json({ error: "Failed to create transaction" });
+              }
+
+              return res.status(200).json({
+                message:
+                  "Balance updated and transaction recorded successfully",
+                balance: newBalance,
+                transaction: insertResult,
+              });
+            }
+          );
 
           return res
             .status(200)
