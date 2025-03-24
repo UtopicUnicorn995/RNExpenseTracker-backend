@@ -248,7 +248,7 @@ const addBalance = async (req, res) => {
 };
 
 const subtractBalance = async (req, res) => {
-  const { id, amount } = req.body;
+  const { id, amount, description } = req.body;
 
   if (!id || !amount) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -266,7 +266,9 @@ const subtractBalance = async (req, res) => {
       }
 
       const user = result[0];
-      const newBalance = user.available_balance - amount;
+      const currentBalance = parseFloat(user.available_balance);
+      const subtractAmount = parseFloat(amount);
+      const newBalance = currentBalance - subtractAmount;
 
       if (newBalance < 0) {
         return res.status(400).json({ error: "Insufficient funds" });
@@ -300,10 +302,6 @@ const subtractBalance = async (req, res) => {
               });
             }
           );
-
-          return res
-            .status(200)
-            .json({ message: "Balance updated successfully", updateResult });
         }
       );
     });
@@ -314,7 +312,7 @@ const subtractBalance = async (req, res) => {
 };
 
 const updateBalance = async (req, res) => {
-  const { id, newBalance } = req.body;
+  const { id, newBalance, description } = req.body;
 
   if (!id || !newBalance) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -344,7 +342,7 @@ const updateBalance = async (req, res) => {
 
           db.query(
             "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, amount, "modify", description || ""],
+            [id, newBalance, "modify", description || ""],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
@@ -361,10 +359,6 @@ const updateBalance = async (req, res) => {
               });
             }
           );
-
-          return res
-            .status(200)
-            .json({ message: "Balance updated successfully", updateResult });
         }
       );
     });

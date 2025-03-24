@@ -14,6 +14,7 @@ router.post("/login", loginUser);
 router.delete("/delete", deleteUser);
 router.put("/add-balance", addBalance);
 router.put("/subtract-balance", subtractBalance);
+router.put("/update-balance", updateBalance);
 
 console.log("router");
 
