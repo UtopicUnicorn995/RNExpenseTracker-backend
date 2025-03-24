@@ -186,4 +186,159 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { createUser, loginUser, deleteUser };
+const addBalance = async (req, res) => {
+  const { id, amount, description } = req.body;
+
+  if (!id || !amount) {
+    return res.status(400).json({ error: "User ID and amount are required" });
+  }
+
+  try {
+    db.query("SELECT * FROM users WHERE id = ?", [id], (err, result) => {
+      if (err) {
+        console.error("Error fetching user", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const user = result[0];
+      const currentBalance = parseFloat(user.available_balance);
+      const addAmount = parseFloat(amount);
+
+      const newBalance = currentBalance + addAmount;
+
+      db.query(
+        "UPDATE users SET available_balance = ? WHERE id = ?",
+        [newBalance, id],
+        (updateErr, updateResult) => {
+          if (updateErr) {
+            console.error("Error updating user balance:", updateErr);
+            return res.status(500).json({ error: "Failed to update balance" });
+          }
+
+          db.query(
+            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
+            [id, amount, "credit", description || ""],
+            (insertErr, insertResult) => {
+              if (insertErr) {
+                console.error("Error creating transaction:", insertErr);
+                return res
+                  .status(500)
+                  .json({ error: "Failed to create transaction" });
+              }
+
+              return res.status(200).json({
+                message:
+                  "Balance updated and transaction recorded successfully",
+                balance: newBalance,
+                transaction: insertResult,
+              });
+            }
+          );
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+const subtractBalance = async (req, res) => {
+  const { id, amount } = req.body;
+
+  if (!id || !amount) {
+    return res.status(400).json({ error: "User ID and amount are required" });
+  }
+
+  try {
+    db.query("SELECT * FROM users WHERE id = ?", [id], async (err, result) => {
+      if (err) {
+        console.error("Error fetching user", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (result.length === 0) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      const user = result[0];
+      const newBalance = user.available_balance - amount;
+
+      if (newBalance < 0) {
+        return res.status(400).json({ error: "Insufficient funds" });
+      }
+
+      db.query(
+        "UPDATE users SET available_balance = ? WHERE id = ?",
+        [newBalance, id],
+        (updateErr, updateResult) => {
+          if (updateErr) {
+            console.error("Error updating user: ", updateErr);
+            return res.status(500).json({ error: "Failed to update balance" });
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Balance updated successfully", updateResult });
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Unexpected error: ", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+const updateBalance = async (req, res) => {
+  const { id, amount } = req.body;
+
+  if (!id || !amount) {
+    return res.status(400).json({ error: "User ID and amount are required" });
+  }
+
+  try {
+    db.query("SELECT * FROM users WHERE id = ?", [id], async (err, result) => {
+      if (err) {
+        console.error("Error fetching user", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+
+      if (result.length === 0) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      const user = result[0];
+
+      db.query(
+        "UPDATE users SET available_balance = ? WHERE id = ?",
+        [amount, id],
+        (updateErr, updateResult) => {
+          if (updateErr) {
+            console.error("Error updating user: ", updateErr);
+            return res.status(500).json({ error: "Failed to update balance" });
+          }
+
+          return res
+            .status(200)
+            .json({ message: "Balance updated successfully", updateResult });
+        }
+      );
+    });
+  } catch (error) {
+    console.error("Unexpected error: ", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+module.exports = {
+  createUser,
+  loginUser,
+  deleteUser,
+  addBalance,
+  subtractBalance,
+  updateBalance,
+};
