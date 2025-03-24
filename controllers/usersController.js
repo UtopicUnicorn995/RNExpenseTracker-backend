@@ -2,6 +2,52 @@ const db = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const generateAccountNumber = () => {
+  const accountNumber = Math.floor(
+    100000000000000 + Math.random() * 900000000000000
+  );
+  return accountNumber.toString();
+};
+
+// db.query(
+//   "ALTER TABLE users ADD COLUMN account_number VARCHAR(20) UNIQUE;",
+//   (err, result) => {
+//     if (err) {
+//       console.error("Error adding account_number column:", err);
+//     } else {
+//       console.log("Added account_number column to users table");
+//     }
+//   }
+// );
+
+// db.query(
+//   "SELECT id FROM users WHERE account_number IS NULL",
+//   async (err, users) => {
+//     if (err) {
+//       console.error("Error fetching users:", err);
+//       return;
+//     }
+
+//     for (let user of users) {
+//       const accountNumber = generateAccountNumber();
+
+//       db.query(
+//         "UPDATE users SET account_number = ? WHERE id = ?",
+//         [accountNumber, user.id],
+//         (err, result) => {
+//           if (err) {
+//             console.error(`Error updating user ${user.id}:`, err);
+//           } else {
+//             console.log(
+//               `Updated user ${user.id} with account number ${accountNumber}`
+//             );
+//           }
+//         }
+//       );
+//     }
+//   }
+// );
+
 const createUser = async (req, res) => {
   const { username, email, password } = req.body;
 
@@ -9,8 +55,8 @@ const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     db.query(
-      `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
-      [username, email, hashedPassword],
+      `INSERT INTO users (username, email, password, role, available_balance, account_number) VALUES (?, ?, ?, ?, ?, ?)`,
+      [username, email, hashedPassword, "user", 0, generateAccountNumber()],
       (err, result) => {
         if (err) {
           console.error(err);
@@ -78,11 +124,14 @@ const loginUser = async (req, res) => {
             userId: user.id,
             username: user.username,
             email: user.email,
+            available_balance: user.available_balance,
+            account_number: user.account_number,
+            role: user.role,
           },
           process.env.JWT_SECRET
         );
 
-        console.log("res", res);
+        console.log("resss", token);
 
         return res.status(200).json({
           message: "Login successful",
