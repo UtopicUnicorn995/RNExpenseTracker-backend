@@ -1,0 +1,3 @@
+expensesCategory = [
+    Essentials, Commitments, Health, Lifestyle, Education, Work 
+]

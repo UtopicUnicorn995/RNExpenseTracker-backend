@@ -248,7 +248,7 @@ const addBalance = async (req, res) => {
 };
 
 const subtractBalance = async (req, res) => {
-  const { id, amount, description } = req.body;
+  const { id, amount, description, category } = req.body;
 
   if (!id || !amount) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -285,7 +285,7 @@ const subtractBalance = async (req, res) => {
 
           db.query(
             "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, amount, "withdrawal", description || ""],
+            [id, amount, category || "withdrawal", description || ""],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
@@ -372,7 +372,7 @@ const getTransactions = async (req, res) => {
   const { user_id } = req.query;
 
   if (!user_id) {
-    return res.status(400).json({ error: 'User ID is required' });
+    return res.status(400).json({ error: "User ID is required" });
   }
 
   db.query(
