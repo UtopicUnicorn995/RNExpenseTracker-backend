@@ -368,6 +368,27 @@ const updateBalance = async (req, res) => {
   }
 };
 
+const getTransactions = async (req, res) => {
+  const { user_id } = req.query;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  db.query(
+    `SELECT * FROM transactions WHERE user_id = ?`,
+    [user_id],
+    (err, result) => {
+      if (err) {
+        console.error("Error fetching transactions:", err);
+        res.status(500).send("An error occurred while fetching transactions");
+      } else {
+        res.status(200).json({ message: "query success", result });
+      }
+    }
+  );
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -375,4 +396,5 @@ module.exports = {
   addBalance,
   subtractBalance,
   updateBalance,
+  getTransactions,
 };
