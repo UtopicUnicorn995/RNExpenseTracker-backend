@@ -43,34 +43,41 @@ const createExpense = async (req, res) => {
             }
 
             db.query(
-              "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-              [id, amount, 'payment', description || ""],
-              (insertErr, insertResult) => {
-                if (insertErr) {
-                  console.error("Error creating transaction:", insertErr);
+              "INSERT INTO expenses (amount, description, category, date, user_id) VALUES (?, ?, ?, ?, ?)",
+              [
+                amount,
+                description,
+                category || "Uncategorized",
+                date || currentDate,
+                id,
+              ],
+              (expenseErr, expenseResult) => {
+                if (expenseErr) {
+                  console.error("Error creating expense:", expenseErr);
                   return db.rollback(() =>
-                    res
-                      .status(500)
-                      .json({ error: "Failed to create transaction" })
+                    res.status(500).json({ error: "Failed to create expense" })
                   );
                 }
 
+                const expenseId = expenseResult.insertId;
+
                 db.query(
-                  "INSERT INTO expenses (amount, description, category, date, user_id) VALUES (?, ?, ?, ?, ?)",
+                  "INSERT INTO transactions (user_id, amount, category, description, expense_id, date) VALUES (?, ?, ?, ?, ?, ?)",
                   [
-                    amount,
-                    description,
-                    category || "Uncategorized",
-                    date || currentDate,
                     id,
+                    amount,
+                    "payment",
+                    description || "",
+                    expenseId,
+                    date || currentDate,
                   ],
-                  (expenseErr) => {
-                    if (expenseErr) {
-                      console.error("Error creating expense:", expenseErr);
+                  (insertErr, insertResult) => {
+                    if (insertErr) {
+                      console.error("Error creating transaction:", insertErr);
                       return db.rollback(() =>
                         res
                           .status(500)
-                          .json({ error: "Failed to create expense" })
+                          .json({ error: "Failed to create transaction" })
                       );
                     }
 
@@ -89,6 +96,7 @@ const createExpense = async (req, res) => {
                           "Balance updated and transaction recorded successfully",
                         balance: newBalance,
                         transaction: insertResult.insertId,
+                        expense_id: expenseId,
                       });
                     });
                   }

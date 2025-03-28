@@ -188,6 +188,7 @@ const deleteUser = async (req, res) => {
 
 const addBalance = async (req, res) => {
   const { id, amount, description } = req.body;
+  const currentDate = new Date().toISOString().split("T")[0];
 
   if (!id || !amount) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -220,8 +221,8 @@ const addBalance = async (req, res) => {
           }
 
           db.query(
-            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, amount, "deposit", description || ""],
+            "INSERT INTO transactions (user_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)",
+            [id, amount, "deposit", description || "", currentDate],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
@@ -249,6 +250,7 @@ const addBalance = async (req, res) => {
 
 const subtractBalance = async (req, res) => {
   const { id, amount, description, category } = req.body;
+  const currentDate = new Date().toISOString().split("T")[0];
 
   if (!id || !amount) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -284,8 +286,14 @@ const subtractBalance = async (req, res) => {
           }
 
           db.query(
-            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, amount, category || "withdrawal", description || ""],
+            "INSERT INTO transactions (user_id, amount, category, description, date) VALUES (?, ?, ?, ?)",
+            [
+              id,
+              amount,
+              category || "withdrawal",
+              description || "",
+              currentDate,
+            ],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
@@ -313,6 +321,7 @@ const subtractBalance = async (req, res) => {
 
 const updateBalance = async (req, res) => {
   const { id, newBalance, description } = req.body;
+  const currentDate = new Date().toISOString().split("T")[0];
 
   if (!id || !newBalance) {
     return res.status(400).json({ error: "User ID and amount are required" });
@@ -341,8 +350,8 @@ const updateBalance = async (req, res) => {
           }
 
           db.query(
-            "INSERT INTO transactions (user_id, amount, category, description) VALUES (?, ?, ?, ?)",
-            [id, newBalance, "modify", description || ""],
+            "INSERT INTO transactions (user_id, amount, category, description, date) VALUES (?, ?, ?, ?, ?)",
+            [id, newBalance, "modify", description || "", currentDate],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Error creating transaction:", insertErr);
