@@ -1,12 +1,13 @@
 const db = require("../db");
 
 const createExpense = async (req, res) => {
-  const { amount, description, category, date, id } = req.body;
+  console.log('create expense')
+  const { amount, description, category, date, user_id } = req.body;
 
   const currentDate = new Date().toISOString().split("T")[0];
 
   try {
-    db.query("SELECT * FROM users WHERE id = ?", [id], async (err, result) => {
+    db.query("SELECT * FROM users WHERE id = ?", [user_id], async (err, result) => {
       if (err) {
         console.error("Error fetching user", err);
         return res.status(500).json({ error: "Database error" });
@@ -33,7 +34,7 @@ const createExpense = async (req, res) => {
 
         db.query(
           "UPDATE users SET available_balance = ? WHERE id = ?",
-          [newBalance, id],
+          [newBalance, user_id],
           (updateErr) => {
             if (updateErr) {
               console.error("Error updating balance:", updateErr);
@@ -49,7 +50,7 @@ const createExpense = async (req, res) => {
                 description,
                 category || "Uncategorized",
                 date || currentDate,
-                id,
+                user_id,
               ],
               (expenseErr, expenseResult) => {
                 if (expenseErr) {
@@ -64,7 +65,7 @@ const createExpense = async (req, res) => {
                 db.query(
                   "INSERT INTO transactions (user_id, amount, category, description, expense_id, date) VALUES (?, ?, ?, ?, ?, ?)",
                   [
-                    id,
+                    user_id,
                     amount,
                     "payment",
                     description || "",
